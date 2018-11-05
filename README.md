@@ -412,15 +412,6 @@ const findIndex = (list, predicate) => {
 console.log(findIndex(users, bmatch({ id: 6, name: "JM", age: 32 })));
 ```
 
-<br/>
-
-
-### 고차함수
-
-- 고차함수는 **함수를 인자로 받거나 함수를 리턴(=클로저를 생성)하는 함수**를 말한다. 
-- 고차함수에는 위에서 만든 map, filter, find, findIndex, bvalue, bmatch 같은 함수들이 포함된다.
-- Underscore.js 라는 라이브러리에서 위와같은 고차함수들을 제공.
-
 
 <br/>
 
@@ -634,7 +625,92 @@ f11(30);	// 60
   - 콜백 패턴에서 콜백으로 함수를 넘기기 이전 상황을 클로저로 만들어 기억.
 - 함수로 함수를 만들거나 부분 적용을 할 때.
 
+```html
+<div></div>
+
+<script>
+    var users = [
+        { id: 1, name: "HA", age: 25 },
+        { id: 2, name: "PJ", age: 26 },
+        { id: 3, name: "JE", age: 27 },
+    ];
+
+    $('.user-list').append(
+        _.map(users, function (user) {	// 클로저가 아님.
+            var button = $('<button>').text(user.name);
+            button.click(function () {	// 계속 유지되는 클로저 (내부에서 user 사용).
+                if (confirm(user.name + "님을 팔로잉 하시겠습니까?")) follow(user);
+            })
+            return button;
+        })
+    );
+
+    function follow(user) {
+									        // 클로저가 되었다가 없어지는 클로저.
+        $.post('/fllow', { user_id: user.id }, function () {	
+            alert('이제 ' + user.name + "님의 소식을 볼 수 있습니다.");
+        })
+    }
+</script>
+```
+
+> map 과 같은 함수는 부수효과로 부터 자유롭고 편하게 프로그래밍 할 수 있도록 도와준다.
 
 
- 
+<br/>
+
+
+
+### 고차함수
+
+- 고차함수에는 위에서 만든 map, filter, find, findIndex, bvalue, bmatch 같은 함수들이 포함된다.
+- Underscore.js 라는 라이브러리에서 위와같은 고차함수들을 제공.
+
+#### 조건
+
+1. 함수를 인자로 받아 대신 실행하는 함수.
+
+   ```js
+   function callWith10(val, func){
+       return func(10, val);
+   }
+   function add(a, b){
+       return a + b;
+   }
+   function sub(a, b){
+       return a - b;
+   }
+   callWith10(20, add);
+   callWith10(5, sub);
+   ```
+
+2. 함수를 리턴하는 함수.
+
+   ```js
+   function constant(val){
+       return function(){
+           return val;
+       }
+   }
+   
+   var always10 = constant(10);
+   ```
+
+3. 함수를 인자로 받아서 또 다른 함수를 리턴하는 함수.
+
+   ```js
+   function callWith(val1){
+       return function(val2, func){
+           return func(val1, val2);
+       }
+   }
+   
+   var callWith10 = callWith(10);
+   callWith10(20, add);	// 30
+   
+   var callWith5 = callWith(5);
+   callWith5(5, sub);		// 0
+   ```
+
+<br/>
 
