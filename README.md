@@ -821,12 +821,10 @@ test(10, 20, 30);
 > Chrome 버전 70.0.3538.102(공식 빌드) (64비트)
 
 
-
 <br/>
 
 
-
-###인자 다시 보기
+### 인자 다시 보기
 
 #### 인자가 일반 변수 or 객체 와 다르게 동작하는 부분
 
@@ -889,9 +887,7 @@ test3(1, 2);
 인자와 일반 변수, 객체의 차이를 잘 알고 사용해야한다.
 
 
-
 <br/>
-
 
 
 ### this 다시보기
@@ -976,7 +972,7 @@ console.log(test == o1.test && o1.test == a1.test);
 // true
 ```
 
-
+<br/>
 
 ### call, apply 다시 보기
 
@@ -1034,8 +1030,6 @@ function test(a, b, c){
     console.log("this: ", this);
     console.log("arguments: ", arguments);
 }
-
-
 ```
 
 - call과 인자 전달 방식이 다름.
