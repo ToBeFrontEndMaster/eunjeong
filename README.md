@@ -780,3 +780,276 @@ console.log(flatten3([1, [2], [3, 4]]);
 - 자바스크립트에서 환경에 따라 다르지만 대략 15,000번 이상 재귀가 일어나면 'Maximum call stack size exceeded'라는 에러가 발생하고 소프트웨어가 죽지만 사실상 거의 발생하지 않음.
 - ~~자바스크립트는 꼬리 재귀 최적화가 되지 않았지만~~(**ES6에서는 명시**) 성능때문에 재귀를 사용할 일이 없는것은 잘못된 정보.
 - 자바스크립트에서는 비동기 프로그래밍이 많이 쓰이고 비동기가 일어나면 스택이 초기화 되기 때문에 애초에 비동기 상황이었다면 스택이 초기화 될 것이기 때문에 재귀 사용을 피할 이유가 없음!
+
+<br/>
+
+## 함수 실행과 그리고 점 다시 보기
+
+### () 다시 보기
+
+- 함수를 실행하는 방법에는 (), call, apply가 있음.
+- 함수 안에서는 **arguments** (유사배열객체) 객체와 this 키워드를 사용할 수 있음.
+- arguments는 함수가 실행될 때 넘겨받은 모든 인자를 배열과 비슷한 형태로 담은 객체.
+  - 함수의 인자로 undefined 를 직접 넘긴 경우와 넘기지 않은 경우의 차이가 있음 (2번, 3번)
+
+```js
+function test(a, b, c){
+    console.log("a b c: ", a, b, c);
+    console.log("this: ", this);
+    console.log("arguments: ", arguments);
+}
+
+// 1번
+test(10);
+// a b c:  10 undefined undefined
+// VM405:3 this:  Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+// VM405:4 arguments:  Arguments [10, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+
+// 2번
+test(10, undefined);
+// a b c:  10 undefined undefined
+// VM405:3 this:  Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+// VM405:4 arguments:  Arguments(2) [10, undefined, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+
+// 3번
+test(10, 20, 30);
+// a b c:  10 20 30
+// VM405:3 this:  Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+// VM405:4 arguments:  Arguments(3) [10, 20, 30, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+```
+
+> Chrome 버전 70.0.3538.102(공식 빌드) (64비트)
+
+
+
+<br/>
+
+
+
+###인자 다시 보기
+
+#### 인자가 일반 변수 or 객체 와 다르게 동작하는 부분
+
+```js
+function test2(a, b){
+    b = 10;
+    console.log(arguments);
+}
+
+test2(1);
+// [1]
+
+test2(1, 2);
+// [1, 10]	나니...?
+```
+
+> 뭔가 이상하다....
+
+```js
+var obj1 = {
+    0: 1,
+    1: 2
+};
+console.log(obj1);
+// { 0: 1, 1: 2 }
+
+var a = obj1[0];
+var b = obj1[1];
+b = 10;
+console.log(obj1);
+// { 0: 1, 1: 2 }
+
+console.log(obj1[1]);
+// 2
+
+console.log(b);
+// 10
+```
+
+> 이게 정상적인 것 처럼 보이는데..? 이것이 인자와 변수의 차이!!!
+>
+> 그럼 첫번째 인자의 객체의 값을 변경하는 예제에서 argument를 통해 객체의 값을 직접 변경 해봐도 동일하게 적용될까?
+
+```js
+function test3(a, b){
+    arguments[1] = 10;
+    console.log(b);
+}
+
+test3(1, 2);
+// 10
+```
+
+> 적용된다!
+
+
+
+#### 결론
+
+인자와 일반 변수, 객체의 차이를 잘 알고 사용해야한다.
+
+
+
+<br/>
+
+
+
+### this 다시보기
+
+> this 맨날 봐도 헷갈리는 부분중 하나! 매우 중요함!!
+
+- 전역 컨텍스트에 할당된 function의 this 는 브라우저에서는 window 객체, Node.js 에서는 global 객체.
+  - TMI 노드에서는 전역 환경의 this만 global이 아니라 module.exports를 가리킴...
+
+```js
+function test(a, b, c){
+    console.log("this: ", this);
+}
+
+test(10);
+// Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+
+test(10, undefined);
+// Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+
+test(10, 20, 30);
+// Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+```
+
+
+
+#### this 에 다른 값이 들어가는 예제 (메서드)
+
+- 객체의 프로퍼티의 값으로 사용되는 함수를 메서드라고 함.
+
+- 메서드에서 this는 메서드를 실행한 객체 "**.**" 왼쪽의 객체가 됨.
+
+```js
+function test(a, b, c){
+    console.log("this: ", this);
+}
+
+var o1 = { name: "obj1" };
+o1.test = test;
+o1.test(3, 2, 1);
+// this:  {name: "obj1", test: ƒ}
+
+var a1 = [1, 2, 3];
+a1.test = test;
+a1.test(3, 3, 3);
+// this:  (3) [1, 2, 3, test: ƒ]
+```
+
+- 같은 함수를 메서드가 아닌 값으로 사용하면, 위의 결과와 달리 아래 예제의 this 는 window 객체.
+
+```js
+var o1_test = o1.test;
+o1_test(5, 6, 7);
+// this:  Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+```
+
+
+
+#### 실행 방법에 따른 this (., [])
+
+- "**.**" 으로 접근하여 실행했기 때문에 o1 이 this 가 되는것으로 어디에 붙어 있는 함수인지 보다 **어떻게 실행했는지**가 중요함. 
+- a1.test 를 괄호로 감싸도 여전히 this는 a1, [] 대괄호로 참조해도 여전히 this는 a1
+
+```js
+(a1.test)(8, 9, 10); 
+// this:  (3) [1, 2, 3, test: ƒ]
+
+a1['test'](8, 9, 10);
+// this:  (3) [1, 2, 3, test: ƒ]
+```
+
+
+
+#### 메서드로 정의된 함수와 일반함수는 같다 !? 
+
+- 모든 함수는 하나의 함수로 다음 두가지가 굉장히 중요함.
+  - '**어떻게 선언했느냐** (클로저, 스코프와 관련)'
+  - '**어떻게 실행했느냐 **(this, arguments 결정)'
+
+```js
+console.log(test == o1.test && o1.test == a1.test);
+// true
+```
+
+
+
+### call, apply 다시 보기
+
+자바스크립트에서 함수를 실행하는 대표적인 방법.
+
+
+
+#### call
+
+```js
+function test(a, b, c){
+    console.log("a b c: ", a, b, c);
+    console.log("this: ", this);
+    console.log("arguments: ", arguments);
+}
+
+test.call(undefined, 1, 2, 3);
+test.call(null, 1, 2, 3);
+test.call(void 0, 1, 2, 3);
+// a b c:  1 2 3
+// this:  Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, parent: Window, …}
+// arguments:  Arguments(3) [1, 2, 3, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+```
+
+- null 이나 undefined 를 call 의 첫 번째 인자에 넣으면 this 는 window 가 된다.
+- void  0 의 결과도 undefined 이기 때문에 같은 결과가 나온다. 
+
+> void 0 은 처음봄 !
+>
+> call 이 순위가 높다!
+>
+> undefined 는 예약어가 아니다!
+
+```js
+var o1 = { name: "obj1" };
+
+test.call(o1, 1, 2, 3);
+// a b c:  1 2 3
+// this:  {name: "obj1"}
+// arguments:  Arguments(3) [1, 2, 3, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+
+test.call(1000, 1, 2, 3);
+// a b c:  1 2 3
+// this:  Number {1000}
+// arguments:  Arguments(3) [1, 2, 3, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+```
+
+
+
+#### apply
+
+```js
+function test(a, b, c){
+    console.log("a b c: ", a, b, c);
+    console.log("this: ", this);
+    console.log("arguments: ", arguments);
+}
+
+
+```
+
+- call과 인자 전달 방식이 다름.
+- 인자를 배열 또는 유사배열객체로 전달함.
+
+> call()은 보통의 인자 삽입방식이라 정적일 경우에 사용하고, apply()는 배열로 값을 받기 때문에 동적으로 값을 조작할 경우 사용한다고 보시면 됩니다.
+
+
+
+<br/>
+
+
+
+
+
+
+
